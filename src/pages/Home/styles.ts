@@ -1,4 +1,4 @@
-import { styled } from "styled-components";
+import { styled } from 'styled-components'
 
 export const HomeContainer = styled.main`
   flex: 1;
@@ -40,24 +40,24 @@ const BaseCountdownButton = styled.button`
 `
 
 export const StartCountdownButton = styled(BaseCountdownButton)`
-  color: ${props => props.theme["gray-100"]};
-  background: ${props => props.theme["green-500"]};
+  color: ${(props) => props.theme['gray-100']};
+  background: ${(props) => props.theme['green-500']};
 
-   &:not(:disabled):hover {
-    background: ${props => props.theme["green-700"]};
+  &:not(:disabled):hover {
+    background: ${(props) => props.theme['green-700']};
   }
 `
 
 export const StopCountdownButton = styled(BaseCountdownButton)`
-  color: ${props => props.theme["gray-100"]};
-  background: ${props => props.theme["red-500"]};
+  color: ${(props) => props.theme['gray-100']};
+  background: ${(props) => props.theme['red-500']};
 
   &:focus {
     box-shadow: none;
     border: none;
   }
 
-   &:not(:disabled):hover {
-    background: ${props => props.theme["red-700"]};
+  &:not(:disabled):hover {
+    background: ${(props) => props.theme['red-700']};
   }
 `

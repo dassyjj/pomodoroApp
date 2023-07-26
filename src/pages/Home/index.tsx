@@ -1,33 +1,43 @@
-import { HandPalm, Play } from "phosphor-react";
-import { HomeContainer, StartCountdownButton, StopCountdownButton } from "./styles";
-import { FormProvider, useForm } from "react-hook-form";
+import { HandPalm, Play } from 'phosphor-react'
+import {
+  HomeContainer,
+  StartCountdownButton,
+  StopCountdownButton,
+} from './styles'
+import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as zod from 'zod'
-import { useContext } from "react";
-import { CountDown } from "./components/CountDown";
-import { NewCycleForm } from "./components/NewCycleForm";
-import { CyclesContext } from "../../contexts/CyclesContext";
+import { useContext } from 'react'
+import { CountDown } from './components/CountDown'
+import { NewCycleForm } from './components/NewCycleForm'
+import { CyclesContext } from '../../contexts/CyclesContext'
 
 const newCycleFormValidationSchema = zod.object({
   task: zod.string().min(1, 'task required'),
-  minutesAmount: zod.number()
-  .min(5, 'at least 5 minutes')
-  .max(60, 'maximum 60 minutes')
+  minutesAmount: zod
+    .number()
+    .min(5, 'at least 5 minutes')
+    .max(60, 'maximum 60 minutes'),
 })
 
 type NewCycleFormData = zod.infer<typeof newCycleFormValidationSchema>
 
 export function Home() {
-  const { activeCycleId, cycles, handleCreateNewCycle, handleInterruptedCycle } = useContext(CyclesContext)
+  const {
+    activeCycleId,
+    cycles,
+    handleCreateNewCycle,
+    handleInterruptedCycle,
+  } = useContext(CyclesContext)
 
-  const activeCycle = cycles.find(cycle => cycle.id === activeCycleId)
+  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
 
   const newCycleForm = useForm<NewCycleFormData>({
     resolver: zodResolver(newCycleFormValidationSchema),
     defaultValues: {
       task: '',
       minutesAmount: 0,
-    }
+    },
   })
 
   const { handleSubmit, watch, reset } = newCycleForm

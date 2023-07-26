@@ -1,4 +1,7 @@
-import { ReactNode, createContext, useState } from "react"
+import { ReactNode, createContext, useEffect, useReducer } from 'react'
+import { cyclesReducer } from '../../reducers/cycles'
+import { cyclesActionTypes } from '../../reducers/actions'
+import { differenceInSeconds } from 'date-fns'
 
 interface Cycle {
   id: string
@@ -11,9 +14,12 @@ interface Cycle {
 
 interface CyclesContextProps {
   cycles: Cycle[]
-  activeCycleId: string
+  activeCycleId: string | null
   amountSecondsPassed: number
-  handleCreateNewCycle: (contentCycle: { task: string, minutesAmount: number }) => void
+  handleCreateNewCycle: (contentCycle: {
+    task: string
+    minutesAmount: number
+  }) => void
   handleInterruptedCycle: () => void
   markCycleAsFinished: () => void
   handleManipulationSeconds: (value: number) => void
@@ -26,61 +32,101 @@ interface Props {
 }
 
 export function CyclesContextProvider({ children }: Props) {
-  const [cycles, setCycles] = useState<Cycle[]>([])
-  const [activeCycleId, setActiveCycleId] = useState<string | null>(null)
-  const [amountSecondsPassed, setAmountSecondsPassed] = useState(0)
+  const [cyclesState, dispatch] = useReducer(
+    cyclesReducer,
+    {
+      cycles: [],
+      activeCycleId: null,
+      amountSecondsPassed: 0,
+    },
+    (inicialState) => {
+      const storedStateAsJSON = localStorage.getItem(
+        '@appPomodoro:cycles-state-1.0.0',
+      )
 
-  function handleCreateNewCycle(contentCycle: { task: string, minutesAmount: number }) {
-    const newCycle: Cycle = {
-      id: String(new Date().getTime()),
-      task: contentCycle.task,
-      minutesAmount: contentCycle.minutesAmount,
-      startDate: new Date(),
-    }
+      if (storedStateAsJSON) {
+        return JSON.parse(storedStateAsJSON)
+      }
 
-    setCycles(cycle => [...cycle, newCycle])
-    setActiveCycleId(newCycle.id)
-    setAmountSecondsPassed(0)
+      return {
+        ...inicialState,
+        amountSecondsPassed: () => {
+          const activeCycle = inicialState.cycles.find(
+            (cycle: Cycle) => cycle.id === inicialState.activeCycleId,
+          )
+
+          if (activeCycle) {
+            return differenceInSeconds(
+              new Date(),
+              new Date(activeCycle.startDate),
+            )
+          }
+
+          return 0
+        },
+      }
+    },
+  )
+
+  useEffect(() => {
+    const stateJSON = JSON.stringify(cyclesState)
+
+    localStorage.setItem('@appPomodoro:cycles-state-1.0.0', stateJSON)
+  }, [cyclesState])
+
+  const { cycles, activeCycleId, amountSecondsPassed } = cyclesState
+
+  function handleCreateNewCycle(contentCycle: {
+    task: string
+    minutesAmount: number
+  }) {
+    dispatch({
+      type: cyclesActionTypes.CREATE_NEW_CYCLE,
+      payload: {
+        contentCycle,
+      },
+    })
   }
 
   function handleInterruptedCycle() {
-    setCycles(cyclesState => cyclesState.map(cycle => {
-      if(cycle.id === activeCycleId) {
-        return {...cycle, interruptedDate: new Date()}
-      } else {
-        return cycle
-      }
-    }))
-
-    setActiveCycleId(null)
+    dispatch({
+      type: cyclesActionTypes.INTERRUPTED_CYCLE,
+      payload: {
+        interruptedDate: new Date(),
+      },
+    })
   }
 
   function markCycleAsFinished() {
-    setCycles(cycleState => cycleState.map(cycle => {
-      if(cycle.id === activeCycleId) {
-        return {...cycle, finishedDate: new Date()}
-      } else {
-        return cycle
-      }
-    }))
-
-    setActiveCycleId(null)
+    dispatch({
+      type: cyclesActionTypes.MARK_CYCLE_AS_FINISHED,
+      payload: {
+        finishedDate: new Date(),
+      },
+    })
   }
 
   function handleManipulationSeconds(value: number) {
-    setAmountSecondsPassed(value)
+    dispatch({
+      type: cyclesActionTypes.MANIPULATION_SECONDS,
+      payload: {
+        value,
+      },
+    })
   }
 
   return (
-    <CyclesContext.Provider value={{
-      cycles,
-      activeCycleId,
-      amountSecondsPassed,
-      handleCreateNewCycle,
-      handleInterruptedCycle,
-      markCycleAsFinished,
-      handleManipulationSeconds
-    }}>
+    <CyclesContext.Provider
+      value={{
+        cycles,
+        activeCycleId,
+        amountSecondsPassed,
+        handleCreateNewCycle,
+        handleInterruptedCycle,
+        markCycleAsFinished,
+        handleManipulationSeconds,
+      }}
+    >
       {children}
     </CyclesContext.Provider>
   )
